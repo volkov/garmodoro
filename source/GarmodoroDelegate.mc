@@ -1,9 +1,11 @@
 using Toybox.Application as App;
 using Toybox.Attention as Attention;
 using Toybox.WatchUi as Ui;
+using Toybox.ActivityRecording;
 
 var timer;
 var tickTimer;
+var session;
 var minutes = 0;
 var pomodoroNumber = 1;
 var isPomodoroTimerStarted = false;
@@ -48,6 +50,9 @@ class GarmodoroDelegate extends Ui.BehaviorDelegate {
 
 			timer.start( method( :breakCallback ), 60 * 1000, true );
 			isBreakTimerStarted = true;
+			session.stop();
+			session.save();
+			session = null;
 		}
 
 		Ui.requestUpdate();
@@ -109,10 +114,22 @@ class GarmodoroDelegate extends Ui.BehaviorDelegate {
 		if ( me.shouldTick() ) {
 			tickTimer.start( method( :tickCallback ), 1000, true );
 		}
+		startActivity();
 		isPomodoroTimerStarted = true;
 
 		Ui.requestUpdate();
 
 		return true;
+	}
+
+	function startActivity() {
+		if ( Toybox has :ActivityRecording ) {
+			session = ActivityRecording.createSession( {
+				:name => "Pomodoro",
+				:sport => ActivityRecording.SPORT_GENERIC,
+				:subSport => ActivityRecording.SUB_SPORT_GENERIC
+			} );
+			session.start();
+		}
 	}
 }
