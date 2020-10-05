@@ -10,6 +10,7 @@ var minutes = 0;
 var pomodoroNumber = 1;
 var isPomodoroTimerStarted = false;
 var isBreakTimerStarted = false;
+var expectBreak = false;
 
 function ping( dutyCycle, length ) {
 	if ( Attention has :vibrate ) {
@@ -43,19 +44,28 @@ class GarmodoroDelegate extends Ui.BehaviorDelegate {
 		if ( minutes == 0 ) {
 			play( 10 ); // Attention.TONE_LAP
 			ping( 100, 1500 );
-			tickTimer.stop();
-			timer.stop();
-			isPomodoroTimerStarted = false;
-			minutes = App.getApp().getProperty( isLongBreak() ? "longBreakLength" : "shortBreakLength" );
-
-			timer.start( method( :breakCallback ), 60 * 1000, true );
-			isBreakTimerStarted = true;
-			session.stop();
-			session.save();
-			session = null;
+			expectBreak = true;
+		}
+		if (minutes < 0) {
+			ping( 50, 500 );
+			expectBreak = true;
 		}
 
 		Ui.requestUpdate();
+	}
+
+	function goBreak() {
+		tickTimer.stop();
+		timer.stop();
+		isPomodoroTimerStarted = false;
+		expectBreak = false;
+		minutes = App.getApp().getProperty( isLongBreak() ? "longBreakLength" : "shortBreakLength" );
+
+		timer.start( method( :breakCallback ), 60 * 1000, true );
+		isBreakTimerStarted = true;
+		session.stop();
+		session.save();
+		session = null;
 	}
 
 	function breakCallback() {
@@ -101,6 +111,11 @@ class GarmodoroDelegate extends Ui.BehaviorDelegate {
 	}
 
 	function onSelect() {
+		if ( expectBreak ) {
+			goBreak();
+			Ui.requestUpdate();
+			return true;
+		}
 		if ( isBreakTimerStarted || isPomodoroTimerStarted ) {
 			Ui.pushView( new Rez.Menus.StopMenu(), new StopMenuDelegate(), Ui.SLIDE_UP );
 			return true;
