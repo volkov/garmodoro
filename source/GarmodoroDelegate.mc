@@ -110,6 +110,10 @@ class GarmodoroDelegate extends Ui.BehaviorDelegate {
 		return true;
 	}
 
+  function onKey(keyEvent) {
+      return onSelect();
+  }
+
 	function onSelect() {
 		if ( expectBreak ) {
 			goBreak();
